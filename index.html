@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simple Video Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+        body{font-family:'Inter',sans-serif;background:#000;color:#fff;height:100vh;overflow:hidden;touch-action:none;}
+        .player-container{position:relative;width:100%;height:100vh;overflow:hidden;}
+        .video-wrapper{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;touch-action:none;}
+        video{width:100%;height:100%;object-fit:contain;transition:transform 0.2s ease, filter 0.2s ease;}
+        .controls-container{position:absolute;bottom:0;left:0;width:100%;padding:15px;background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);opacity:0;transition:opacity 0.3s;pointer-events:none;}
+        .controls-container.visible{opacity:1;pointer-events:all;}
+        .progress-time{display:flex;align-items:center;gap:10px;margin-bottom:15px;}
+        .progress-container{flex-grow:1;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;cursor:pointer;}
+        .progress-bar{height:100%;background:#ff3d3d;border-radius:2px;transition:width 0.1s;}
+        .time-display{font-size:13px;font-weight:500;min-width:100px;text-align:center;}
+        .main-controls{display:flex;justify-content:space-between;align-items:center;}
+        .seek-controls{display:flex;align-items:center;gap:15px;}
+        .right-controls{display:flex;align-items:center;gap:15px;}
+        .control-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;opacity:0.9;transition:all 0.2s;}
+        .control-btn:hover{opacity:1;transform:scale(1.1);}
+        .seek-indicator{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);padding:5px 15px;border-radius:20px;font-size:14px;font-weight:500;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+        .seek-indicator.show{opacity:1;}
+        .orientation-prompt{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;z-index:10;}
+        .orientation-text{font-size:18px;text-align:center;padding:0 20px;}
+        .rotate-icon{font-size:50px;animation:pulse 2s infinite;}
+        @keyframes pulse{0%{transform:rotate(0deg);}50%{transform:rotate(90deg);}100%{transform:rotate(90deg);}}
+        .settings-panel{position:absolute;top:0;right:0;width:80%;max-width:300px;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);transform:translateX(100%);transition:transform 0.3s ease;z-index:15;padding:20px;display:flex;flex-direction:column;gap:25px;overflow-y:auto;}
+        .settings-panel.show{transform:translateX(0);}
+        .settings-header{font-size:16px;font-weight:500;color:#fff;margin-bottom:5px;}
+        .slider-container{width:100%;margin:15px 0;}
+        .slider-label{display:flex;color: #999;justify-content:space-between;margin-bottom:5px;font-size:14px;}
+        .slider{width:100%;height:6px;-webkit-appearance:none;background:rgba(255,255,255,0.2);border-radius:3px;outline:none;}
+        .slider::-webkit-slider-thumb{width:16px;height:16px;-webkit-appearance:none;background:#fff;border-radius:50%;cursor:pointer;}
+        .settings-btn{padding:12px 15px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background 0.2s;}
+        .settings-btn:hover{background:rgba(255,255,255,0.2);}
+        .demo-videos{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:1;}
+        .demo-link{background:rgba(255,255,255,0.1);padding:6px 10px;border-radius:20px;text-decoration:none;color:#fff;font-size:11px;transition:all 0.3s;backdrop-filter:blur(5px);}
+        .pinch-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none;}
+        .zoom-level{position:absolute;bottom:80px;right:15px;background:rgba(0,0,0,0.7);padding:5px 10px;border-radius:20px;font-size:12px;opacity:0;transition:opacity 0.3s;}
+        .zoom-level.show{opacity:1;}
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <div class="video-wrapper">
+            <video id="videoPlayer"></video>
+            
+            <div class="controls-container" id="controlsContainer">
+                <div class="progress-time">
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+                </div>
+                
+                <div class="main-controls">
+                    <div class="seek-controls">
+                        <button class="control-btn" id="backBtn">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="control-btn" id="playPauseBtn">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="control-btn" id="forwardBtn">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="right-controls">
+                        <button class="control-btn" id="settingsBtn">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button class="control-btn" id="fullscreenBtn">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="seek-indicator" id="seekIndicator">+10s</div>
+            <div class="pinch-overlay" id="pinchOverlay"></div>
+            <div class="zoom-level" id="zoomLevel">100%</div>
+            
+            <div class="settings-panel" id="settingsPanel">
+                <div class="settings-section">
+                    <div class="settings-header">Volume & Brightness</div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Volume</span>
+                            <span id="volumeValue">100%</span>
+                        </div>
+                        <input type="range" class="slider" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Brightness</span>
+                            <span id="brightnessValue">100%</span>
+                        </div>
+                        <input type="range" class="slider" id="brightnessSlider" min="0.1" max="1" step="0.05" value="1">
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <div class="settings-header">Information</div>
+                    <div class="settings-btn" id="videoInfoBtn">
+                        <span>Video Quality</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <br>
+                    <div class="settings-btn" id="aboutBtn">
+                        <span>About Player</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="orientation-prompt" id="orientationPrompt">
+                <i class="fas fa-undo rotate-icon"></i>
+                <div class="orientation-text">Please rotate your device to landscape mode for best viewing experience</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const videoPlayer = document.getElementById('videoPlayer');
+        const controlsContainer = document.getElementById('controlsContainer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const backBtn = document.getElementById('backBtn');
+        const forwardBtn = document.getElementById('forwardBtn');
+        const seekIndicator = document.getElementById('seekIndicator');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const orientationPrompt = document.getElementById('orientationPrompt');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const brightnessSlider = document.getElementById('brightnessSlider');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const videoInfoBtn = document.getElementById('videoInfoBtn');
+        const aboutBtn = document.getElementById('aboutBtn');
+        const pinchOverlay = document.getElementById('pinchOverlay');
+        const zoomLevel = document.getElementById('zoomLevel');
+        
+        let controlsTimeout;
+        let isLandscape = window.innerWidth > window.innerHeight;
+        let initialDistance = null;
+        let currentZoom = 1;
+        let lastTouchTime = 0;
+        
+        function checkOrientation() {
+            isLandscape = window.innerWidth > window.innerHeight;
+            if(isLandscape) {
+                orientationPrompt.style.display = 'none';
+                if(!videoPlayer.paused) showControls();
+            } else {
+                orientationPrompt.style.display = 'flex';
+                videoPlayer.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                hideControls();
+                hideSettings();
+            }
+        }
+        
+        function showControls() {
+            if(!isLandscape) return;
+            controlsContainer.classList.add('visible');
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(hideControls, 3000);
+        }
+        
+        function hideControls() {
+            controlsContainer.classList.remove('visible');
+        }
+        
+        function showSettings() {
+            settingsPanel.classList.add('show');
+            hideControls();
+        }
+        
+        function hideSettings() {
+            settingsPanel.classList.remove('show');
+        }
+        
+        function formatTime(seconds) {
+            if(isNaN(seconds)) return '00:00';
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function showSeekIndicator(seconds) {
+            seekIndicator.textContent = `${seconds > 0 ? '+' : ''}${seconds}s`;
+            seekIndicator.classList.add('show');
+            setTimeout(() => seekIndicator.classList.remove('show'), 1000);
+        }
+        
+        function togglePlayPause() {
+            if(!isLandscape) return;
+            if(videoPlayer.paused) {
+                videoPlayer.play();
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                showControls();
+            } else {
+                videoPlayer.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                showControls();
+            }
+        }
+        
+        function updateZoom(scale) {
+            currentZoom = Math.max(1, Math.min(3, scale));
+            videoPlayer.style.transform = `scale(${currentZoom})`;
+            videoPlayer.style.transformOrigin = 'center center';
+            zoomLevel.textContent = `${Math.round(currentZoom * 100)}%`;
+            zoomLevel.classList.add('show');
+            setTimeout(() => zoomLevel.classList.remove('show'), 1000);
+        }
+        
+        function handlePinch(e) {
+            e.preventDefault();
+            if(e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                
+                if(initialDistance === null) {
+                    initialDistance = currentDistance;
+                } else {
+                    const scale = currentDistance / initialDistance;
+                    updateZoom(currentZoom * scale);
+                    initialDistance = currentDistance;
+                }
+            }
+        }
+        
+        function resetPinch() {
+            initialDistance = null;
+        }
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        videoPlayer.src = urlParams.get('q') || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+        
+        playPauseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePlayPause();
+        });
+        
+        fullscreenBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if(document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen();
+            }
+            showControls();
+        });
+        
+        backBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            videoPlayer.currentTime -= 10;
+            showSeekIndicator(-10);
+            showControls();
+        });
+        
+        forwardBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            videoPlayer.currentTime += 10;
+            showSeekIndicator(+10);
+            showControls();
+        });
+        
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            videoPlayer.currentTime = pos * videoPlayer.duration;
+            showControls();
+        });
+        
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showSettings();
+        });
+        
+        videoPlayer.addEventListener('click', (e) => {
+            const now = Date.now();
+            if(now - lastTouchTime < 300) { // Double tap
+                if(currentZoom > 1) {
+                    updateZoom(1);
+                } else {
+                    updateZoom(1.5);
+                }
+            }
+            lastTouchTime = now;
+            
+            if(settingsPanel.classList.contains('show')) {
+                hideSettings();
+                return;
+            }
+            
+            if(controlsContainer.classList.contains('visible')) {
+                hideControls();
+            } else {
+                showControls();
+            }
+        });
+        
+        videoPlayer.addEventListener('touchstart', (e) => {
+            if(e.touches.length === 2) {
+                handlePinch(e);
+            }
+        }, {passive: false});
+        
+        videoPlayer.addEventListener('touchmove', (e) => {
+            if(e.touches.length === 2) {
+                handlePinch(e);
+            }
+        }, {passive: false});
+        
+        videoPlayer.addEventListener('touchend', resetPinch);
+        
+        videoPlayer.addEventListener('timeupdate', () => {
+            timeDisplay.textContent = `${formatTime(videoPlayer.currentTime)} / ${formatTime(videoPlayer.duration)}`;
+            progressBar.style.width = `${(videoPlayer.currentTime / videoPlayer.duration) * 100}%`;
+        });
+        
+        videoPlayer.addEventListener('play', () => {
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        });
+        
+        videoPlayer.addEventListener('pause', () => {
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        });
+        
+        volumeSlider.addEventListener('input', () => {
+            videoPlayer.volume = volumeSlider.value;
+            volumeValue.textContent = `${Math.round(volumeSlider.value * 100)}%`;
+            videoPlayer.muted = (volumeSlider.value == 0);
+        });
+        
+        brightnessSlider.addEventListener('input', () => {
+            videoPlayer.style.filter = `brightness(${brightnessSlider.value})`;
+            brightnessValue.textContent = `${Math.round(brightnessSlider.value * 100)}%`;
+        });
+        
+        videoInfoBtn.addEventListener('click', () => {
+            hideSettings();
+            setTimeout(() => {
+                alert("Video Quality: Auto\n\nSupported Resolutions:\n- 1080p (Full HD)\n- 720p (HD)\n- 480p (SD)\n\nCurrent Resolution: " + 
+                      `${videoPlayer.videoWidth}x${videoPlayer.videoHeight}`);
+            }, 300);
+        });
+        
+        aboutBtn.addEventListener('click', () => {
+            hideSettings();
+            setTimeout(() => {
+                alert("Created by Starexx\n\nSimple Video Player\n\nVersion 1.0\n\nFeatures:\n- Pinch to zoom\n- Smooth controls\n- Gesture support");
+            }, 300);
+        });
+        
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+        
+        document.addEventListener('click', (e) => {
+            if(!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+                hideSettings();
+            }
+        });
+        
+        checkOrientation();
+    </script>
+</body>
+</html>
