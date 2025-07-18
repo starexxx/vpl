@@ -3,61 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simple Video Player</title>
+    <title>Starexx Video Player</title>
+    <meta name="title" content="Starexx Simple Video Player v1.1 | Smooth & Minimal Playback">
+    <meta name="description" content="Starexx VPL is a clean, fast, and minimal video player designed for smooth playback without distractions. Enjoy a focused viewing experience with full control.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://raw.githubusercontent.com/starexxx/vpl/d74ad0b47f1dc6f102f07c908d288d0f6d4276f8/logo.jpg">
+    <meta property="og:title" content="VPL">
+    <meta property="og:description" content="A modern, no-nonsense video player built for seamless playback. Lightweight, clean, and distraction-free.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/starexxx/vpl/d74ad0b47f1dc6f102f07c908d288d0f6d4276f8/logo.jpg">
+    <meta name="twitter:title" content="Starexx Video Player">
+    <meta name="twitter:description" content="Smooth, minimal, and efficient. Starexx Video Player offers a focused experience without any clutter or ads.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/starexxx/vpl/d74ad0b47f1dc6f102f07c908d288d0f6d4276f8/logo.jpg">
+    <meta name="keywords" content="Starexx, Starexx Video Player, Simple Video Player, Minimal Video Player, Clean UI Player, Lightweight Media Player, Smooth Video App, Video Player API, Video Player UI, Link to Video, Link to video player, Android Video Player">
+    <meta name="author" content="Starexx">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
         *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
         body{font-family:'Inter',sans-serif;background:#000;color:#fff;height:100vh;overflow:hidden;touch-action:none;}
+    
         .player-container{position:relative;width:100%;height:100vh;overflow:hidden;}
         .video-wrapper{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;touch-action:none;}
         video{width:100%;height:100%;object-fit:contain;transition:transform 0.2s ease, filter 0.2s ease;}
+    
         .controls-container{position:absolute;bottom:0;left:0;width:100%;padding:15px;background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);opacity:0;transition:opacity 0.3s;pointer-events:none;}
         .controls-container.visible{opacity:1;pointer-events:all;}
+    
         .progress-time{display:flex;align-items:center;gap:10px;margin-bottom:15px;}
         .progress-container{flex-grow:1;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;cursor:pointer;}
         .progress-bar{height:100%;background:#ff3d3d;border-radius:2px;transition:width 0.1s;}
+    
         .time-display{font-size:13px;font-weight:500;min-width:100px;text-align:center;}
         .main-controls{display:flex;justify-content:space-between;align-items:center;}
         .seek-controls{display:flex;align-items:center;gap:15px;}
         .right-controls{display:flex;align-items:center;gap:15px;}
+    
         .control-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;opacity:0.9;transition:all 0.2s;}
         .control-btn:hover{opacity:1;transform:scale(1.1);}
+    
         .seek-indicator{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);padding:5px 15px;border-radius:20px;font-size:14px;font-weight:500;opacity:0;transition:opacity 0.3s;pointer-events:none;}
         .seek-indicator.show{opacity:1;}
-        .orientation-prompt{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;z-index:10;}
+    
+        .orientation-prompt{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,10);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;z-index:10;}
         .orientation-text{font-size:18px;text-align:center;padding:0 20px;}
+    
         .rotate-icon{font-size:50px;animation:pulse 2s infinite;}
         @keyframes pulse{0%{transform:rotate(0deg);}50%{transform:rotate(90deg);}100%{transform:rotate(90deg);}}
+    
         .settings-panel{position:absolute;top:0;right:0;width:80%;max-width:300px;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);transform:translateX(100%);transition:transform 0.3s ease;z-index:15;padding:20px;display:flex;flex-direction:column;gap:25px;overflow-y:auto;}
         .settings-panel.show{transform:translateX(0);}
         .settings-header{font-size:16px;font-weight:500;color:#fff;margin-bottom:5px;}
+    
         .slider-container{width:100%;margin:15px 0;}
         .slider-label{display:flex;color: #999;justify-content:space-between;margin-bottom:5px;font-size:14px;}
         .slider{width:100%;height:6px;-webkit-appearance:none;background:rgba(255,255,255,0.2);border-radius:3px;outline:none;}
         .slider::-webkit-slider-thumb{width:16px;height:16px;-webkit-appearance:none;background:#fff;border-radius:50%;cursor:pointer;}
+    
         .settings-btn{padding:12px 15px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background 0.2s;}
         .settings-btn:hover{background:rgba(255,255,255,0.2);}
-        .demo-videos{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:1;}
-        .demo-link{background:rgba(255,255,255,0.1);padding:6px 10px;border-radius:20px;text-decoration:none;color:#fff;font-size:11px;transition:all 0.3s;backdrop-filter:blur(5px);}
+    
         .pinch-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none;}
         .zoom-level{position:absolute;bottom:80px;right:15px;background:rgba(0,0,0,0.7);padding:5px 10px;border-radius:20px;font-size:12px;opacity:0;transition:opacity 0.3s;}
         .zoom-level.show{opacity:1;}
+    
+        .custom-alert{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s;border:1px solid #121212;}
+        .custom-alert.show{opacity:1;pointer-events:all;}
+    
+        .alert-box{background:rgba(0,0,0,0.4);backdrop-filter:blur(10px);border-radius:10px;width:90%;max-width:350px;overflow:hidden;}
+        .alert-header{padding:15px;background:transparent;color:white;font-weight:500;text-align:center;}
+        .alert-content{padding:20px;text-align:center;}
+        .alert-actions{display:flex;border-top:1px solid #444;}
+        .alert-btn{flex:1;padding:12px;background:none;border:none;color:#fff;font-weight:500;cursor:pointer;}
+        .alert-btn:not(:last-child){border-right:1px solid #444;}
+        .alert-btn:hover{background:rgba(255,255,255,0.1);}
+        
+        iframe{display:none !important;visibility:hidden !important;}
     </style>
 </head>
 <body>
     <div class="player-container">
         <div class="video-wrapper">
-            <video id="videoPlayer"></video>
-            
-            <div class="controls-container" id="controlsContainer">
+            <video id="videoPlayer"></video>          
+              <div class="controls-container" id="controlsContainer">
                 <div class="progress-time">
                     <div class="progress-container" id="progressContainer">
                         <div class="progress-bar" id="progressBar"></div>
                     </div>
                     <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
-                </div>
-                
+                </div>                
                 <div class="main-controls">
                     <div class="seek-controls">
                         <button class="control-btn" id="backBtn">
@@ -69,8 +102,7 @@
                         <button class="control-btn" id="forwardBtn">
                             <i class="fas fa-redo"></i>
                         </button>
-                    </div>
-                    
+                    </div>                  
                     <div class="right-controls">
                         <button class="control-btn" id="settingsBtn">
                             <i class="fas fa-cog"></i>
@@ -80,12 +112,10 @@
                         </button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="seek-indicator" id="seekIndicator">+10s</div>
+            </div>            
+            <div class="seek-indicator" id="seekIndicator">Skip 10s</div>
             <div class="pinch-overlay" id="pinchOverlay"></div>
             <div class="zoom-level" id="zoomLevel">100%</div>
-            
             <div class="settings-panel" id="settingsPanel">
                 <div class="settings-section">
                     <div class="settings-header">Volume & Brightness</div>
@@ -96,7 +126,6 @@
                         </div>
                         <input type="range" class="slider" id="volumeSlider" min="0" max="1" step="0.01" value="1">
                     </div>
-                    
                     <div class="slider-container">
                         <div class="slider-label">
                             <span>Brightness</span>
@@ -105,28 +134,39 @@
                         <input type="range" class="slider" id="brightnessSlider" min="0.1" max="1" step="0.05" value="1">
                     </div>
                 </div>
-                
                 <div class="settings-section">
                     <div class="settings-header">Information</div>
                     <div class="settings-btn" id="videoInfoBtn">
-                        <span>Video Quality</span>
+                        <span>Video Information</span>
                         <i class="fas fa-chevron-right"></i>
                     </div>
                     <br>
                     <div class="settings-btn" id="aboutBtn">
-                        <span>About Player</span>
+                        <span>About Video Player</span>
                         <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
             </div>
-            
             <div class="orientation-prompt" id="orientationPrompt">
                 <i class="fas fa-undo rotate-icon"></i>
                 <div class="orientation-text">Please rotate your device to landscape mode for best viewing experience</div>
             </div>
         </div>
     </div>
+    <div class="custom-alert" id="customAlert">
+        <div class="alert-box">
+            <div class="alert-header" id="alertHeader">Alert</div>
+            <div class="alert-content" id="alertContent">Created by Starexx</div>
+            <div class="alert-actions">
+                <button class="alert-btn" id="alertOkBtn">OK</button>
+            </div>
+        </div>
+    </div>    
     <script>
+        if(window.top !== window.self) {
+            window.top.location = window.self.location;
+        }
+        
         const videoPlayer = document.getElementById('videoPlayer');
         const controlsContainer = document.getElementById('controlsContainer');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -148,18 +188,43 @@
         const aboutBtn = document.getElementById('aboutBtn');
         const pinchOverlay = document.getElementById('pinchOverlay');
         const zoomLevel = document.getElementById('zoomLevel');
-        
+        const customAlert = document.getElementById('customAlert');
+        const alertHeader = document.getElementById('alertHeader');
+        const alertContent = document.getElementById('alertContent');
+        const alertOkBtn = document.getElementById('alertOkBtn');        
         let controlsTimeout;
         let isLandscape = window.innerWidth > window.innerHeight;
         let initialDistance = null;
         let currentZoom = 1;
         let lastTouchTime = 0;
         
+        function showAlert(title, message) {
+            alertHeader.textContent = title;
+            alertContent.textContent = message;
+            customAlert.classList.add('show');
+        }
+        
+        alertOkBtn.addEventListener('click', () => {
+            customAlert.classList.remove('show');
+        });
+        
         function checkOrientation() {
             isLandscape = window.innerWidth > window.innerHeight;
             if(isLandscape) {
                 orientationPrompt.style.display = 'none';
                 if(!videoPlayer.paused) showControls();
+                // Auto play when landscape
+                if(videoPlayer.paused && videoPlayer.readyState > 2) {
+                    videoPlayer.play().catch(e => {
+                        showAlert("Playback Error", "Autoplay was blocked. Please tap to play.");
+                    });
+                }
+                // Auto fullscreen in landscape
+                if(!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(e => {
+                        console.log("Fullscreen error:", e);
+                    });
+                }
             } else {
                 orientationPrompt.style.display = 'flex';
                 videoPlayer.pause();
@@ -205,9 +270,12 @@
         function togglePlayPause() {
             if(!isLandscape) return;
             if(videoPlayer.paused) {
-                videoPlayer.play();
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                showControls();
+                videoPlayer.play().then(() => {
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    showControls();
+                }).catch(e => {
+                    showAlert("Playback Error", "Please interact with the page first to play video.");
+                });
             } else {
                 videoPlayer.pause();
                 playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
@@ -248,8 +316,43 @@
             initialDistance = null;
         }
         
+        function checkVideoUrl(url) {
+            if(!url) {
+                showAlert("Invalid URL", "No video URL provided in query parameter 'q'");
+                return false;
+            }
+            
+            const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.m3u8'];
+            const isValid = videoExtensions.some(ext => url.includes(ext));
+            
+            if(!isValid) {
+                showAlert("Invalid Video", "The provided URL doesn't seem to be a valid video file.");
+                return false;
+            }
+            
+            return true;
+        }
+        
         const urlParams = new URLSearchParams(window.location.search);
-        videoPlayer.src = urlParams.get('q') || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+        const videoUrl = urlParams.get('q') || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+        
+        if(checkVideoUrl(videoUrl)) {
+            videoPlayer.src = videoUrl;
+            
+            videoPlayer.addEventListener('error', () => {
+                showAlert("Playback Error", "Failed to load the video. Please check the URL.");
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if(!document.fullscreenElement && isLandscape) {
+                    document.documentElement.requestFullscreen().catch(e => {
+                        console.log("Fullscreen error:", e);
+                    });
+                }
+            }, 500);
+        });
         
         playPauseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -276,7 +379,7 @@
         forwardBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             videoPlayer.currentTime += 10;
-            showSeekIndicator(+10);
+            showSeekIndicator("Skip " +10);
             showControls();
         });
         
@@ -342,6 +445,14 @@
             playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
         });
         
+        videoPlayer.addEventListener('loadedmetadata', () => {
+            if(isLandscape) {
+                videoPlayer.play().catch(e => {
+                    console.log("Autoplay blocked:", e);
+                });
+            }
+        });
+        
         volumeSlider.addEventListener('input', () => {
             videoPlayer.volume = volumeSlider.value;
             volumeValue.textContent = `${Math.round(volumeSlider.value * 100)}%`;
@@ -356,15 +467,14 @@
         videoInfoBtn.addEventListener('click', () => {
             hideSettings();
             setTimeout(() => {
-                alert("Video Quality: Auto\n\nSupported Resolutions:\n- 1080p (Full HD)\n- 720p (HD)\n- 480p (SD)\n\nCurrent Resolution: " + 
-                      `${videoPlayer.videoWidth}x${videoPlayer.videoHeight}`);
+                showAlert("Video information", `Video Quality: Default\n\nResolution: ${videoPlayer.videoWidth}x${videoPlayer.videoHeight}\n\nDuration: ${formatTime(videoPlayer.duration)}`);
             }, 300);
         });
         
         aboutBtn.addEventListener('click', () => {
             hideSettings();
             setTimeout(() => {
-                alert("Created by Starexx\n\nSimple Video Player\n\nVersion 1.0\n\nFeatures:\n- Pinch to zoom\n- Smooth controls\n- Gesture support");
+                showAlert("About Video Player", "Starexx Video Player v1.1\nA lightweight, ad-free video player with pinch to zoom, gesture controls, and custom UI for a smooth and intuitive playback experience.\n\nBy Starexx.");
             }, 300);
         });
         
@@ -374,6 +484,13 @@
         document.addEventListener('click', (e) => {
             if(!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
                 hideSettings();
+            }
+        });
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            if(window.self !== window.top) {
+                document.body.innerHTML = '';
+                document.write('This page cannot be embedded in iframes (Starexx)');
             }
         });
         
