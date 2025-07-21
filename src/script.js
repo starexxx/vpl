@@ -3,7 +3,7 @@
          * Video Player v1.2
          * A modern, responsive video player with no ads, no clutter and fast
          * 
-         * Copyright (c) 2025 Ankite Mehta (Starexx)
+         * Copyright (c) 2025 Ankit Mehta (Starexx)
          *
          * Licensed under the Apache License, Version 2.0 (the "License");
          * you may not use this file except in compliance with the License.
